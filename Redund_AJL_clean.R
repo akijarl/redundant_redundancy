@@ -239,9 +239,9 @@ Sim_C_score<-function(N,m,Nmu,nloci,per_g,alpha,os,re=10){
     gtypesb <<- append(gtypesb,list(strsplit (as.character(simb[[j]][,1]),split = "")))
     allelesa <- append(allelesa,list(array (NA, c (nrow(sima[[j]]),length (gtypesa[[j]])))))
     allelesb <- append(allelesb,list(array (NA, c (nrow(simb[[j]]),length (gtypesb[[j]])))))
-    for (k in 1:length (gtypesa[[j]])){
-      allelesa[[j]][,k] <- as.numeric (sapply (gtypesa[j],"[[",k))
-      allelesb[[j]][,k] <- as.numeric (sapply (gtypesb[j],"[[",k))
+    for (k in 1:length (gtypesa[[j]][[1]])){
+      allelesa[[j]][,k] <- as.numeric (sapply (gtypesa[[j]],"[[",k))
+      allelesb[[j]][,k] <- as.numeric (sapply (gtypesb[[j]],"[",k))
     }
     freqsa <- append(freqsa,list(colSums (allelesa[[j]]) / nrow (allelesa[[j]])))
     freqsb <- append(freqsb,list(colSums (allelesb[[j]]) / nrow (allelesb[[j]])))
@@ -262,3 +262,4 @@ Sim_C_score<-function(N,m,Nmu,nloci,per_g,alpha,os,re=10){
 Sim_C_score(N,m,Nmu,nloci,per_g,alpha,os)
 
 hist(C, xlab="C score", main=paste(nloci,"locus case"))
+

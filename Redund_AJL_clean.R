@@ -247,7 +247,12 @@ Sim_C_score<-function(N,m,Nmu,nloci,per_g,alpha,os,re=10){
     freqsb <- append(freqsb,list(colSums (allelesb[[j]]) / nrow (allelesb[[j]])))
     the_d <- append(the_d,list(abs(freqsa[[j]] - freqsb[[j]])) )
   }
-    
+  
+  # Add some number of neutral "no difference between patches" loci (bunch of zeros) - number of loci is determined by 'per_g' variable 
+  for(l in 1:length(the_d)){
+    the_d[[l]]<-append(the_d[[l]], rep(0,nloci/per_g - nloci))
+  }
+  
   comb<- combinations(length(the_d),2,1:length(the_d))
 
   count=1

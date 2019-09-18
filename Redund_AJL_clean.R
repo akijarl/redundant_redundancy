@@ -261,5 +261,5 @@ Sim_C_score<-function(N,m,Nmu,nloci,per_g,alpha,os,re=10){
   
 Sim_C_score(N,m,Nmu,nloci,per_g,alpha,os)
 
- hist(C_score, xlab="C score", main=paste(nloci,"locus case"))
+hist(C_score, xlab="C score", main=paste(nloci,"locus case"))
 

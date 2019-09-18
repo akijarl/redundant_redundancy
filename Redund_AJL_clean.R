@@ -183,7 +183,7 @@ alpha <- 0.1 # Effect on trait
 os <- 5 # omega.sq
 m <- 0.20 # Mutation rate
 nloci <- 50 # Number of loci under selection
-per_g <- 1 # Percentage of total genome that loci under selection represent, if set to 1 then 100% of loci are under selection
+per_g <- 0.1 # Percentage of total genome that loci under selection represent, if set to 1 then 100% of loci are under selection
 
 #############################################################################################################################
 #Code to redund. simulate quant traits and generate C_chisquared values with full pairwise comparisons of all generated sims
@@ -268,5 +268,7 @@ Sim_C_score<-function(N,m,Nmu,nloci,per_g,alpha,os,re=10){
 Sim_C_score(N,m,Nmu,nloci,per_g,alpha,os)
 
 # Visualize C score
-hist(C_score, xlab="C score", main=paste(nloci,"locus case"))
+hist(C_score, xlab="C score", main=paste(nloci," locus case, ",per_g,"% of genome",sep =""))
 
+#nsim_50_100<-nsim
+#C_score_50_100<-C_score

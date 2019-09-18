@@ -190,7 +190,7 @@ per_g <- 0.1 # Percentage of total genome that loci under selection represent
 #############################################################################################################################
 # Receiving object creation
 nsim<-list()
-C<-NULL
+C_score<-NULL
 gtypesa<-NULL
 gtypesb<-NULL
 
@@ -227,17 +227,16 @@ Sim_C_score<-function(N,m,Nmu,nloci,per_g,alpha,os,re=10){
   
   for(j in 1:length(nsim)){
     sim<-append(sim,list(nsim[[j]]$ind_df))
-    sim[[j]]$genotype_neut<-NA
+    #sim[[j]]$genotype_neut<-NA
     # loop below adds neutral loci to the genotype list from the simulation above, the number of neutral genotypes is based on the 'per_g' parameter
-    for(l in 1:nrow(sim[[j]])){
-      sim[[j]]$genotype_neut[l]<-paste(c(paste(sim[[j]]$genotype[l],collapse=""),paste(rbinom(nloci/per_g - nloci, 1, 0),collapse="")),collapse="")
-      #sim[[j]]$genotype_neut[l]<-paste(c(paste(sim[[j]]$genotype[l],collapse=""),paste(rbinom(nloci/per_g - nloci, 1, Nmu),collapse="")),collapse="")
-    }
-    sim[[j]]$genotype_neut<-as.factor(sim[[j]]$genotype_neut)
+    #for(l in 1:nrow(sim[[j]])){
+      #sim[[j]]$genotype_neut[l]<-paste(c(paste(sim[[j]]$genotype[l],collapse=""),paste(rbinom(nloci/per_g - nloci, 1, 0),collapse="")),collapse="")
+    #}
+    #sim[[j]]$genotype_neut<-as.factor(sim[[j]]$genotype_neut)
     sima <- append(sima,list(sim[[j]][sim[[j]][,3] > 0,]))
     simb <- append(simb,list(sim[[j]][sim[[j]][,3] < 0,]))
-    gtypesa <<- append(gtypesa,list(sima[[j]][,4]))
-    gtypesb <<- append(gtypesb,list(simb[[j]][,4]))
+    gtypesa <<- append(gtypesa,list(strsplit (as.character(sima[[j]][,1]),split = "")))
+    gtypesb <<- append(gtypesb,list(strsplit (as.character(simb[[j]][,1]),split = "")))
     allelesa <- append(allelesa,list(array (NA, c (nrow(sima[[j]]),length (gtypesa[[j]])))))
     allelesb <- append(allelesb,list(array (NA, c (nrow(simb[[j]]),length (gtypesb[[j]])))))
     for (k in 1:length (gtypesa[[j]])){
@@ -255,7 +254,7 @@ Sim_C_score<-function(N,m,Nmu,nloci,per_g,alpha,os,re=10){
   for (i in 1:nrow(comb)){
     print(paste("Calculating C score for combination ",count,sep=""))
     the_mat <- cbind (the_d[[comb[i,1]]],the_d[[comb[i,2]]])
-    C <<- c(C,pairwise_c_chisq(the_mat))
+    C_score <<- c(C_score,pairwise_c_chisq(the_mat))
     count=count+1
   }
 }

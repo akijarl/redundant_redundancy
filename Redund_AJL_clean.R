@@ -45,7 +45,7 @@ simulatePop <- function(N, mu, alpha, nloci, omega.sq, m, seed=NULL){
       }
     }
     
-    if (t %% 1000 == 0){print(t)}
+    if (t %% 1000 == 0){print(paste("Sim. Generation", t))}
     # Mutation
     set.seed(i)
     a<- which(runif(tot)<mu)
@@ -182,17 +182,12 @@ Nmu <- 0.1 # Population scaled mutation rate
 alpha <- 0.1 # Effect on trait
 os <- 5 # omega.sq
 m <- 0.20 # Mutation rate
-nloci <- 10 # Number of loci under selection
+nloci <- 50 # Number of loci under selection
 per_g <- 0.1 # Percentage of total genome that loci under selection represent, if set to 1 then 100% of loci are under selection
 
 #############################################################################################################################
 #Code to redund. simulate quant traits and generate C_chisquared values with full pairwise comparisons of all generated sims
 #############################################################################################################################
-# Receiving object creation
-nsim<-list()
-C_score<-NULL
-gtypesa<-NULL
-gtypesb<-NULL
 
 # Sim / C score function 
 # argument 're' indicates how many simulations to accumulate prior to calculating C score, default is 10
@@ -207,7 +202,7 @@ Sim_C_score<-function(N,m,Nmu,nloci,per_g,alpha,os,re=10){
       if(nsim1$LA>=0.1){
         nyet=TRUE
         nsim<<-append(nsim,list(nsim1))
-        print("L.A. >= 0.1")
+        print(paste("L.A. >= 0.1, simulation ",i,"/",re," complete",sep=""))
       }
       else{
         count=count+1
@@ -263,16 +258,24 @@ Sim_C_score<-function(N,m,Nmu,nloci,per_g,alpha,os,re=10){
     count=count+1
   }
 }
-  
+
+# Receiving object creation
+nsim<-list()
+C_score<-NULL
+gtypesa<-NULL
+gtypesb<-NULL
+
 # Run function
 Sim_C_score(N,m,Nmu,nloci,per_g,alpha,os)
 
 # Visualize C score
 hist(C_score, xlab="C score", main=paste(nloci," locus case, ",per_g*100,"% of the genome",sep =""))
 
-#nsim_10_1<-nsim
-#C_score_10_1<-C_score
-#nsim_50_1<-nsim
-#C_score_50_1<-C_score
+#nsim_10_100<-nsim
+#C_score_10_100<-C_score
+#nsim_10_10<-nsim
+#C_score_10_10<-C_score
+#nsim_50_10<-nsim
+#C_score_50_10<-C_score
 #nsim_50_100<-nsim
 #C_score_50_100<-C_score

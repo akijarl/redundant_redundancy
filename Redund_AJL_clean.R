@@ -182,7 +182,7 @@ Nmu <- 0.1 # Population scaled mutation rate
 alpha <- 0.1 # Effect on trait
 os <- 5 # omega.sq
 m <- 0.20 # Mutation rate
-nloci <- 50 # Number of loci under selection
+nloci <- 10 # Number of loci under selection
 per_g <- 0.1 # Percentage of total genome that loci under selection represent, if set to 1 then 100% of loci are under selection
 
 #############################################################################################################################
@@ -268,7 +268,11 @@ Sim_C_score<-function(N,m,Nmu,nloci,per_g,alpha,os,re=10){
 Sim_C_score(N,m,Nmu,nloci,per_g,alpha,os)
 
 # Visualize C score
-hist(C_score, xlab="C score", main=paste(nloci," locus case, ",per_g,"% of genome",sep =""))
+hist(C_score, xlab="C score", main=paste(nloci," locus case, ",per_g*100,"% of the genome",sep =""))
 
+#nsim_10_1<-nsim
+#C_score_10_1<-C_score
+#nsim_50_1<-nsim
+#C_score_50_1<-C_score
 #nsim_50_100<-nsim
 #C_score_50_100<-C_score

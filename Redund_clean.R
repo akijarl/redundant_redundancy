@@ -147,7 +147,7 @@ simulatePop <- function(N, mu, alpha, nloci, omega.sq, m, seed=NULL){
   return(list(pheno_dist=final_df, geno_counts=redund_tots, ind_df=ind_df, LA=LA))
 } # end function
 
-# Sam's pairwise C_chisquared function
+# Sam Yeaman's pairwise C_chisquared function
 pairwise_c_chisq <- function (input,num_permute = 100000,na.rm = F){
   
   numcol <- ncol (input)

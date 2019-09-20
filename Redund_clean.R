@@ -259,8 +259,8 @@ Nmu <- 0.1 # Population scaled mutation rate
 alpha <- 0.1 # Effect on trait
 os <- 5 # omega.sq
 m <- 0.20 # Mutation rate
-nloci <- 20 # Number of loci under selection
-per_g <- 0.2 # Percentage of total genome that loci under selection represent, if set to 1 then 100% of loci are under selection
+nloci <- 50 # Number of loci under selection
+per_g <- 0.5 # Percentage of total genome that loci under selection represent, if set to 1 then 100% of loci are under selection
 
 # Receiving object creation
 nsim<-list()

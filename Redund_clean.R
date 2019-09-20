@@ -288,10 +288,16 @@ hist(C_score, xlab="C score", main=paste(nloci," locus case, ",per_g*100,"% of t
 
 (genotypic_redund <- redundancy(20, alpha))
 
-genotypic_redund$Num[genotypic_redund$phen==median(abs(nsim_20_20[[1]]$ind_df$phenotype[nsim_20_20[[1]]$ind_df$patch>0]))]
-genotypic_redund$Num[genotypic_redund$phen==median(abs(nsim_20_20[[1]]$ind_df$phenotype[nsim_20_20[[1]]$ind_df$patch<0]))]
+phen<-genotypic_redund$phen
+med_phen<-NULL
 
+for(m in 1:length(nsim_20_20)){
+med_phen<-c(med_phen,median(abs(nsim_20_20[[m]]$ind_df$phenotype)))
+}
+genotypic_redund$Num[phen==round(med_phen,10)]
 
+comb<- combinations(length(nsim_20_20),2,1:length(nsim_20_20))
+median()
 C_score_20_20[1]
 
 (genotypic_redund <- redundancy(50, alpha))

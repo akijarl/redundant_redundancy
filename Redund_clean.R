@@ -259,8 +259,8 @@ Nmu <- 0.1 # Population scaled mutation rate
 alpha <- 0.1 # Effect on trait
 os <- 5 # omega.sq
 m <- 0.20 # Mutation rate
-nloci <- 50 # Number of loci under selection
-per_g <- 0.5 # Percentage of total genome that loci under selection represent, if set to 1 then 100% of loci are under selection
+nloci <- 20 # Number of loci under selection
+per_g <- 0.2 # Percentage of total genome that loci under selection represent, if set to 1 then 100% of loci are under selection
 
 # Receiving object creation
 nsim<-list()
@@ -274,8 +274,27 @@ Sim_C_score(N,m,Nmu,nloci,per_g,alpha,os)
 # Visualize C score
 hist(C_score, xlab="C score", main=paste(nloci," locus case, ",per_g*100,"% of the genome",sep =""))
 
+############################################
+# Visualize effect of redundancy on C score
+############################################
 #nsim_20_20<-nsim
 #C_score_20_20<-C_score
 #nsim_50_50<-nsim
 #C_score_50_50<-C_score
+
+# getmode <- function(x) {
+#   unique(x)[which.max(tabulate(match(x, unique(x))))]
+# }
+
+(genotypic_redund <- redundancy(20, alpha))
+
+genotypic_redund$Num[genotypic_redund$phen==median(abs(nsim_20_20[[1]]$ind_df$phenotype[nsim_20_20[[1]]$ind_df$patch>0]))]
+genotypic_redund$Num[genotypic_redund$phen==median(abs(nsim_20_20[[1]]$ind_df$phenotype[nsim_20_20[[1]]$ind_df$patch<0]))]
+
+
+C_score_20_20[1]
+
+(genotypic_redund <- redundancy(50, alpha))
+mean(nsim_50_50[[1]]$ind_df$phenotype[nsim_20_20[[1]]$ind_df$patch>0])
+mean(nsim_50_50[[1]]$ind_df$phenotype[nsim_20_20[[1]]$ind_df$patch<0])
 

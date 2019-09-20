@@ -286,21 +286,108 @@ hist(C_score, xlab="C score", main=paste(nloci," locus case, ",per_g*100,"% of t
 #   unique(x)[which.max(tabulate(match(x, unique(x))))]
 # }
 
-comb<- combinations(length(nsim_20_20),2,1:length(nsim_20_20))
+comb<- combinations(length(nsim),2,1:length(nsim))
 
-(genotypic_redund <- redundancy(20, alpha))
+nloci <-20
+per_g<-0.2
+(genotypic_redund <- redundancy(nloci, alpha))
 phen<-genotypic_redund$phen
 
 med_phen<-NULL
-for(m in 1:length(nsim_20_20)){
-med_phen<-c(med_phen,median(abs(nsim_20_20[[m]]$ind_df$phenotype)))
+num_seg_tot<-NULL
+for(m in 1:nrow(comb)){
+  med_phen<-c(med_phen,median(abs(c(nsim_20_20[[comb[m,1]]]$ind_df$phenotype,nsim_20_20[[comb[m,2]]]$ind_df$phenotype))))
+  num_seg_tot<-c(num_seg_tot,sum(c(nsim_20_20[[comb[m,1]]]$pheno_dist$num_seg,nsim_20_20[[comb[m,2]]]$pheno_dist$num_seg)))
 }
+
 gen_redun<-data.frame(genotypic_redund[match(round(med_phen,10),genotypic_redund$phen),])
-row.names(gen_redun)<-1:length(nsim_20_20)
+row.names(gen_redun)<-1:nrow(comb)
 
-C_score_20_20[1]
+gen_redun$num_seg<-num_seg_tot
+gen_redun$C_score<-C_score_20_20
 
+par(mfcol=c(2,2))
+plot(gen_redun$log10Num,gen_redun$C_score,xlab=expression(paste("Log"[10], " genotypic redundancy (at median evolved phenotypes)")), ylab="C score",main=paste(nloci," locus case, ",per_g*100,"% of the genome",sep =""))
+abline(lm(gen_redun$C_score~gen_redun$log10Num),col="red")
+
+plot(gen_redun$num_seg,gen_redun$C_score,xlab="Number of segregating sites", ylab="C score",main=paste(nloci," locus case, ",per_g*100,"% of the genome",sep =""))
+abline(lm(gen_redun$C_score~gen_redun$num_seg),col="red")
+
+
+nloci <-50
+per_g<-0.5
 (genotypic_redund <- redundancy(50, alpha))
-mean(nsim_50_50[[1]]$ind_df$phenotype[nsim_20_20[[1]]$ind_df$patch>0])
-mean(nsim_50_50[[1]]$ind_df$phenotype[nsim_20_20[[1]]$ind_df$patch<0])
+
+phen<-genotypic_redund$phen
+
+med_phen<-NULL
+num_seg_tot<-NULL
+for(m in 1:nrow(comb)){
+  med_phen<-c(med_phen,median(abs(c(nsim_50_50[[comb[m,1]]]$ind_df$phenotype,nsim_50_50[[comb[m,2]]]$ind_df$phenotype))))
+  num_seg_tot<-c(num_seg_tot,sum(c(nsim_50_50[[comb[m,1]]]$pheno_dist$num_seg,nsim_50_50[[comb[m,2]]]$pheno_dist$num_seg)))
+}
+
+gen_redun<-data.frame(genotypic_redund[match(round(med_phen,10),genotypic_redund$phen),])
+row.names(gen_redun)<-1:nrow(comb)
+
+gen_redun$num_seg<-num_seg_tot
+gen_redun$C_score<-C_score_50_50
+
+plot(gen_redun$log10Num,gen_redun$C_score,xlab=expression(paste("Log"[10], " genotypic redundancy (at median evolved phenotypes)")), ylab="C score",main=paste(nloci," locus case, ",per_g*100,"% of the genome",sep =""))
+abline(lm(gen_redun$C_score~gen_redun$log10Num),col="red")
+
+plot(gen_redun$num_seg,gen_redun$C_score,xlab="Number of segregating sites", ylab="C score",main=paste(nloci," locus case, ",per_g*100,"% of the genome",sep =""))
+abline(lm(gen_redun$C_score~gen_redun$num_seg),col="red")
+
+
+#############################################################
+# Visualize genotypic redund at optima
+dev.off()
+
+nloci <-20
+per_g<-0.2
+(genotypic_redund <- redundancy(nloci, alpha))
+phen<-genotypic_redund$phen
+
+med_phen<-NULL
+num_seg_tot<-NULL
+for(m in 1:nrow(comb)){
+  med_phen<-c(med_phen,median(abs(c(nsim_20_20[[comb[m,1]]]$ind_df$phenotype,nsim_20_20[[comb[m,2]]]$ind_df$phenotype))))
+  num_seg_tot<-c(num_seg_tot,sum(c(nsim_20_20[[comb[m,1]]]$pheno_dist$num_seg,nsim_20_20[[comb[m,2]]]$pheno_dist$num_seg)))
+}
+
+gen_redun<-data.frame(genotypic_redund[match(round(med_phen,10),genotypic_redund$phen),])
+row.names(gen_redun)<-1:nrow(comb)
+
+gen_redun$num_seg<-num_seg_tot
+gen_redun$C_score<-C_score_20_20
+
+plot(gen_redun$log10Num,gen_redun$C_score,xlim=c(genotypic_redund$log10Num[genotypic_redund$phen==1],max(gen_redun$log10Num)),xlab=expression(paste("Log"[10], " genotypic redundancy (at median evolved phenotypes)")), ylab="C score",main=paste(nloci," locus case, ",per_g*100,"% of the genome",sep =""))
+abline(v=genotypic_redund$log10Num[genotypic_redund$phen==1],col="blue")
+abline(lm(gen_redun$C_score~gen_redun$log10Num),col="red")
+
+nloci <-50
+per_g<-0.5
+(genotypic_redund <- redundancy(50, alpha))
+
+phen<-genotypic_redund$phen
+
+med_phen<-NULL
+num_seg_tot<-NULL
+for(m in 1:nrow(comb)){
+  med_phen<-c(med_phen,median(abs(c(nsim_50_50[[comb[m,1]]]$ind_df$phenotype,nsim_50_50[[comb[m,2]]]$ind_df$phenotype))))
+  num_seg_tot<-c(num_seg_tot,sum(c(nsim_50_50[[comb[m,1]]]$pheno_dist$num_seg,nsim_50_50[[comb[m,2]]]$pheno_dist$num_seg)))
+}
+
+gen_redun<-data.frame(genotypic_redund[match(round(med_phen,10),genotypic_redund$phen),])
+row.names(gen_redun)<-1:nrow(comb)
+
+gen_redun$num_seg<-num_seg_tot
+gen_redun$C_score<-C_score_50_50
+
+
+plot(gen_redun$log10Num,gen_redun$C_score,xlim=c(genotypic_redund$log10Num[genotypic_redund$phen==1],max(gen_redun$log10Num)),xlab=expression(paste("Log"[10], " genotypic redundancy (at median evolved phenotypes)")), ylab="C score",main=paste(nloci," locus case, ",per_g*100,"% of the genome",sep =""))
+abline(v=genotypic_redund$log10Num[genotypic_redund$phen==1],col="blue")
+abline(lm(gen_redun$C_score~gen_redun$log10Num),col="red")
+
 

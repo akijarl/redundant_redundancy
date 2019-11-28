@@ -8,14 +8,10 @@
 ##################################################################################
 # Calculate C_chisq and show how it changes with number of loci affecting a trait
 ##################################################################################
-library(gtools)
-library(dplyr)
-library(ggplot2)
-library(cowplot)
+packages<-c("gtools","dplyr","ggplot2","cowplot")
 
-setwd("~/Desktop/PostDoc/redundant_redundancy/")
-#load("Redund_clean.RData")
-
+if (!(packages %in% installed.packages())){install.packages(packages)}
+lapply(packages,require,character.only = TRUE)
 
 # Don't go below 20 loci
 redundancy <- function(nloci, alpha) {
@@ -262,8 +258,10 @@ Nmu <- 0.1 # population scaled mutation rate
 alpha <- 0.1 # effect on trait
 os <- 5 # omega.sq
 m <- 0.20 # migration rate
-nloci <- c(200,300,400,500) # set of four different number of loci under selection
-per_g <- nloci/10000 # Percentage of total genome that loci under selection represent, if set to 1 then 100% of loci are under selection
+genome <- 1000 # genome size
+nloci <- c(20,30,40,50) # set of four different number of loci under selection
+per_g <- nloci/genome # Percentage of total genome that loci under selection represent, if set to 1 then 100% of loci are under selection
+
 # run function
 for(r in 1:length(nloci)){
   nsim<-list()

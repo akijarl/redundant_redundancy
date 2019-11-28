@@ -5,14 +5,17 @@
 ## Mod. by Áki Jarl 
 ## Added C_chisq calculation with function from Sam Yeaman and visualization
 ## Aug. 28, 2019
-################################################################
-# Calculate C_chisq and show how it changes with number of loci 
-################################################################
+##################################################################################
+# Calculate C_chisq and show how it changes with number of loci affecting a trait
+##################################################################################
 library(gtools)
 library(dplyr)
 library(ggplot2)
+library(cowplot)
 
+setwd("~/Desktop/PostDoc/redundant_redundancy/")
 #load("Redund_clean.RData")
+
 
 # Don't go below 20 loci
 redundancy <- function(nloci, alpha) {
@@ -183,27 +186,26 @@ pairwise_c_chisq <- function (input,num_permute = 100000,na.rm = F){
 #############################################################################################################################
 #Code to redund. simulate quant traits and generate C_chisquared values with full pairwise comparisons of all generated sims
 #############################################################################################################################
-
 # Sim / C score function 
 # argument 're' indicates how many simulations to accumulate prior to calculating C score, default is 10
-Sim_C_score<-function(N,m,Nmu,nloci,per_g,alpha,os,re=10){
+Sim_C_score<-function(N,m,Nmu,nloci,per_g,alpha,os,LA=0.1,re=10){
   print(paste("Running ",nloci," loci (",per_g*100,"%) simulation",sep=""))
   comp=1
   for(i in rep(nloci,re)){
-    # Run simulation until there are 're' many replicates with a local adaptation of at least 0.1
-    count=1
+    # run simulation until there are 're' many replicates with a local adaptation of at least 0.1
+    cnt=1
     nyet=FALSE
     while(nyet==FALSE){
       nsim1 <- simulatePop(N, Nmu/N, alpha, nloci=i, os, m)
-      if(nsim1$LA>=0.1){
+      if(nsim1$LA>=LA){
         nyet=TRUE
         nsim<<-append(nsim,list(nsim1))
-        print(paste("L.A. >= 0.1, simulation ",comp,"/",re," complete",sep=""))
+        print(paste("L.A. >= ",LA,", simulation ",comp,"/",re," complete",sep=""))
         comp=comp+1
       }
       else{
-        count=count+1
-        print(paste("L.A. < 0.1, re-running simulation ",comp,": attempt number ",count,sep="")) 
+        cnt=cnt+1
+        print(paste("L.A. < ", LA,", re-running simulation ",comp,": attempt number ",cnt,sep="")) 
       }
     }
   }
@@ -219,12 +221,6 @@ Sim_C_score<-function(N,m,Nmu,nloci,per_g,alpha,os,re=10){
   
   for(j in 1:length(nsim)){
     sim<-append(sim,list(nsim[[j]]$ind_df))
-    #sim[[j]]$genotype_neut<-NA
-    # loop below adds neutral loci to the genotype list from the simulation above, the number of neutral genotypes is based on the 'per_g' parameter
-    #for(l in 1:nrow(sim[[j]])){
-      #sim[[j]]$genotype_neut[l]<-paste(c(paste(sim[[j]]$genotype[l],collapse=""),paste(rbinom(nloci/per_g - nloci, 1, 0),collapse="")),collapse="")
-    #}
-    #sim[[j]]$genotype_neut<-as.factor(sim[[j]]$genotype_neut)
     sima <- append(sima,list(sim[[j]][sim[[j]][,3] > 0,]))
     simb <- append(simb,list(sim[[j]][sim[[j]][,3] < 0,]))
     gtypesa <<- append(gtypesa,list(strsplit (as.character(sima[[j]][,1]),split = "")))
@@ -240,90 +236,86 @@ Sim_C_score<-function(N,m,Nmu,nloci,per_g,alpha,os,re=10){
     the_d <- append(the_d,list(abs(freqsa[[j]] - freqsb[[j]])) )
   }
   
-  # Add some number of neutral "no difference between patches" loci (bunch of zeros) - number of loci is determined by 'per_g' variable 
+  # add some number of neutral "no difference between patches" loci (bunch of zeros) - number of loci is determined by 'per_g' variable 
   for(l in 1:length(the_d)){
     the_d[[l]]<-append(the_d[[l]], rep(0,nloci/per_g - nloci))
   }
   
   comb<- combinations(length(the_d),2,1:length(the_d))
 
-  count=1
+  cnt=1
   for (i in 1:nrow(comb)){
-    print(paste("Calculating C score for combination ",count,sep=""))
+    print(paste("Calculating C score for combination ",cnt,sep=""))
     the_mat <- cbind (the_d[[comb[i,1]]],the_d[[comb[i,2]]])
     C_score <<- c(C_score,pairwise_c_chisq(the_mat))
-    count=count+1
+    cnt=cnt+1
   }
 }
 
-## Set parameters
-N <- 1000 # Population size
-Nmu <- 0.1 # Population scaled mutation rate
-(mu <- Nmu/N) # Mutation rate
-alpha <- 0.1 # Effect on trait
-os <- 5 # omega.sq
-m <- 0.20 # Mutation rate
-nloci <- c(20,30,40,50) # Number of loci under selection
-per_g <- nloci/1000 # Percentage of total genome that loci under selection represent, if set to 1 then 100% of loci are under selection
+########################################
+## set parameters and run simulation
+########################################
 
-# Run function
+N <- 1000 # population size
+Nmu <- 0.1 # population scaled mutation rate
+(mu <- Nmu/N) # mutation rate
+alpha <- 0.1 # effect on trait
+os <- 5 # omega.sq
+m <- 0.20 # migration rate
+nloci <- c(200,300,400,500) # set of four different number of loci under selection
+per_g <- nloci/10000 # Percentage of total genome that loci under selection represent, if set to 1 then 100% of loci are under selection
+# run function
 for(r in 1:length(nloci)){
-  # Receiving object creation
   nsim<-list()
   C_score<-NULL
   gtypesa<-NULL
   gtypesb<-NULL
-  Sim_C_score(N,m,Nmu,nloci[r],per_g[r],alpha,os)
+  Sim_C_score(N,m,Nmu,nloci[r],per_g[r],alpha,os,LA=0.1,re=10)
   assign(paste("nsim_",nloci[r],sep=""),nsim)
   assign(paste("C_score_",nloci[r],sep=""),C_score)
 }
 
+# collect output for each loci scenario into one file
+nsim_all<-mget(ls(pattern = "nsim_[0-9]"))
+C_score_all<-mget(ls(pattern = "C_score_[0-9]"))
+
+#nsim_all<-mget(ls(pattern = "nsim_[0-9][0-9][0-9]"))
+#C_score_all<-mget(ls(pattern = "C_score_[0-9][0-9][0-9]"))
+
 # Visualize C score
-hist(C_score, xlab="C score", main=paste(nloci," locus case, ",per_g*100,"% of the genome",sep =""))
+for(i in 1:length(C_score_all)){
+  hist(C_score_all[[i]], xlab="C score", main=paste(nloci[i]," locus case, ",per_g[i]*100,"% of the genome",sep =""))
+}
 
 ############################################
 # Visualize effect of redundancy on C score
 ############################################
 
-# getmode <- function(x) {
-#   unique(x)[which.max(tabulate(match(x, unique(x))))]
-# }
-
 comb<- combinations(length(nsim),2,1:length(nsim))
 gen_redun_final<-NULL
 
 for(r in 1:length(nloci)){
-  print(nloci[r])
-  print(per_g[r])
-  
-}
-  
-nsim<-nsim_20_2
-C_score<-C_score_20_2
-
-
-(genotypic_redund <- redundancy(nloci[r], alpha))
-phen<-genotypic_redund$phen
-
-med_phen<-NULL
-num_seg_tot<-NULL
-for(m in 1:nrow(comb)){
-  med_phen<-c(med_phen,median(abs(c(nsim[[comb[m,1]]]$ind_df$phenotype,nsim[[comb[m,2]]]$ind_df$phenotype))))
-  num_seg_tot<-c(num_seg_tot,sum(c(nsim[[comb[m,1]]]$pheno_dist$num_seg,nsim[[comb[m,2]]]$pheno_dist$num_seg)))
+  (genotypic_redund <- redundancy(nloci[r], alpha))
+  phen<-genotypic_redund$phen
+  med_phen<-NULL
+  num_seg_tot<-NULL
+  for(s in 1:nrow(comb)){
+    med_phen<<-c(med_phen,median(abs(c(nsim_all[[r]][[comb[s,1]]]$ind_df$phenotype,nsim_all[[r]][[comb[s,2]]]$ind_df$phenotype))))
+    num_seg_tot<<-c(num_seg_tot,sum(c(nsim_all[[r]][[comb[s,1]]]$pheno_dist$num_seg,nsim_all[[r]][[comb[s,2]]]$pheno_dist$num_seg)))
+  }
+  gen_redun<-data.frame(genotypic_redund[match(round(med_phen,10),genotypic_redund$phen),])
+  row.names(gen_redun)<-1:nrow(comb)
+  gen_redun$num_seg<-num_seg_tot
+  gen_redun$C_score<-C_score_all[[r]]
+  gen_redun_final<-rbind(gen_redun_final,gen_redun)
 }
 
-gen_redun<-data.frame(genotypic_redund[match(round(med_phen,10),genotypic_redund$phen),])
-row.names(gen_redun)<-1:nrow(comb)
+gen_redun_final$Nloci<-as.factor(c(rep(paste(per_g[1]*100,"%"),nrow(gen_redun)),rep(paste(per_g[2]*100,"%"),nrow(gen_redun)),rep(paste(per_g[3]*100,"%"),nrow(gen_redun)),rep(paste(per_g[4]*100,"%"),nrow(gen_redun))))
 
-gen_redun$num_seg<-num_seg_tot
-gen_redun$C_score<-C_score
-
-gen_redun_final<-rbind(gen_redun_final,gen_redun)
-
-gen_redun_final$Nloci<-as.factor(c(rep("2%",45),rep("3%",45),rep("4%",45),rep("5%",45)))
-
+#can save table of simulation summary below
 #write.csv(gen_redun_final, "gen_redun_final.csv",row.names = F, quote=F)
 
+#save a plot of genotypic redundancy vs C score with its own legend
 lc1<-ggplot(data=gen_redun_final,aes(x=log10Num,y=C_score))+
   geom_point(aes(col=Nloci))+
   xlab(expression(paste("Log"[10], " genotypic redundancy (at median evolved phenotypes)")))+
@@ -332,17 +324,10 @@ lc1<-ggplot(data=gen_redun_final,aes(x=log10Num,y=C_score))+
   labs(color='Percent loci\n affecting trait')+
   theme_classic()
 
-lc1_nl<-ggplot(data=gen_redun_final,aes(x=log10Num,y=C_score))+
-  geom_point(aes(col=Nloci))+
-  xlab(expression(paste("Log"[10], " genotypic redundancy (at median evolved phenotypes)")))+
-  ylab(expression(paste("C"[chi^2], " score")))+
-  geom_smooth(method='lm',se=F)+
-  labs(color='Percent loci\n affecting trait')+
-  theme_classic()+
-  guides(col=FALSE)
-
+#save just the legend from above
 leg<-get_legend(lc1+theme(legend.margin=margin(t=5, r=0, b=0, l=0, unit="cm")))
 
+#save plot of the number of segregating sites vs C score with no legend
 sc<-ggplot(data=gen_redun_final,aes(x=num_seg,y=C_score))+
   geom_point(aes(col=Nloci))+
   xlab(expression(paste("Number of segregating sites")))+
@@ -352,148 +337,73 @@ sc<-ggplot(data=gen_redun_final,aes(x=num_seg,y=C_score))+
   theme_classic()+
   guides(col=FALSE)
 
+#save a plot of genotypic redundancy vs C score with no legend
+lc1_nl<-ggplot(data=gen_redun_final,aes(x=log10Num,y=C_score))+
+  geom_point(aes(col=Nloci))+
+  xlab(expression(paste("Log"[10], " genotypic redundancy (at median evolved phenotypes)")))+
+  ylab(expression(paste("C"[chi^2], " score")))+
+  geom_smooth(method='lm',se=F)+
+  labs(color='Percent loci\n affecting trait')+
+  theme_classic()+
+  guides(col=FALSE)
+
+#plot combined figure of genotypic redundancy vs C score and number of segregating sites vs C score with a shared legend
+plot_grid(leg,lc1_nl, NULL, sc,ncol = 2, nrow = 2,rel_widths = c(1,3,3))
+
+#linear regression stats
 summary(lm(gen_redun_final$C_score~gen_redun_final$log10Num))
 summary(lm(gen_redun_final$C_score~gen_redun_final$num_seg))
 
-plot_grid(leg,lc1_nl, NULL, sc,ncol = 2, nrow = 2,rel_widths = c(1,3,3))
-
-plot_grid(leg,P1_2_noL, NULL, P3_2,ncol = 2, nrow = 2,rel_widths = c(1,3,3))
-
-  #annotate("text", x=70, y=27, label= paste("p-value = ",round(p[[1]],22)))
-
-  
-plot(gen_redun_final$log10Num,gen_redun_final$C_score,xlab=expression(paste("Log"[10], " genotypic redundancy (at median evolved phenotypes)")), ylab="C score")
-abline(lm(gen_redun_final$C_score~gen_redun_final$log10Num),col="red") 
-
-
-paste(nloci," locus case, ",per_g*100,"% of the genome",sep ="")
- 
-plot(gen_redun$log10Num,gen_redun$C_score,xlab=expression(paste("Log"[10], " genotypic redundancy (at median evolved phenotypes)")), ylab="C score",main=paste(nloci," locus case, ",per_g*100,"% of the genome",sep =""))
-abline(lm(gen_redun$C_score~gen_redun$log10Num),col="red")
-
-plot(gen_redun$num_seg,gen_redun$C_score,xlab="Number of segregating sites", ylab="C score",main=paste(nloci," locus case, ",per_g*100,"% of the genome",sep =""))
-abline(lm(gen_redun$C_score~gen_redun$num_seg),col="red")
-
-
-nloci <-50
-per_g<-0.5
-(genotypic_redund <- redundancy(50, alpha))
-
-phen<-genotypic_redund$phen
-
-med_phen<-NULL
-num_seg_tot<-NULL
-for(m in 1:nrow(comb)){
-  med_phen<-c(med_phen,median(abs(c(nsim_50_50[[comb[m,1]]]$ind_df$phenotype,nsim_50_50[[comb[m,2]]]$ind_df$phenotype))))
-  num_seg_tot<-c(num_seg_tot,sum(c(nsim_50_50[[comb[m,1]]]$pheno_dist$num_seg,nsim_50_50[[comb[m,2]]]$pheno_dist$num_seg)))
-}
-
-gen_redun<-data.frame(genotypic_redund[match(round(med_phen,10),genotypic_redund$phen),])
-row.names(gen_redun)<-1:nrow(comb)
-
-gen_redun$num_seg<-num_seg_tot
-gen_redun$C_score<-C_score_50_50
-
-plot(gen_redun$log10Num,gen_redun$C_score,xlab=expression(paste("Log"[10], " genotypic redundancy (at median evolved phenotypes)")), ylab="C score",main=paste(nloci," locus case, ",per_g*100,"% of the genome",sep =""))
-abline(lm(gen_redun$C_score~gen_redun$log10Num),col="red")
-
-plot(gen_redun$num_seg,gen_redun$C_score,xlab="Number of segregating sites", ylab="C score",main=paste(nloci," locus case, ",per_g*100,"% of the genome",sep =""))
-abline(lm(gen_redun$C_score~gen_redun$num_seg),col="red")
-
-
 #############################################################
 # Visualize genotypic redund at optima
-dev.off()
+#############################################################
+N <- 1000 # Population size
+Nmu <- 0.1 # Population scaled mutation rate
+(mu <- Nmu/N) # Mutation rate
+alpha <- 0.1 # Effect on trait
+os <- 5 # omega.sq
+m <- 0.20 # Migration rate
+nloci = 20
+nsim20 <- simulatePop(N, Nmu/N, alpha, nloci, os, m, seed=2098493)
+nloci = 50
+nsim50 <- simulatePop(N, Nmu/N, alpha, nloci, os, m, seed=6667198)
+os <- 1.45 # omega.sq
+m <- 0.50 # Migration rate
+nloci = 20
+nsim20Hm <- simulatePop(N, Nmu/N, alpha, nloci, os, m, seed=6969281)
+nloci = 50
+nsim50Hm <- simulatePop(N, Nmu/N, alpha, nloci, os, m,seed=2141839)
 
-par(mfrow=c(1,2))
-nloci <-20
-per_g<-0.2
-(genotypic_redund <- redundancy(nloci, alpha))
-phen<-genotypic_redund$phen
-
-med_phen<-NULL
-num_seg_tot<-NULL
-for(m in 1:nrow(comb)){
-  med_phen<-c(med_phen,median(abs(c(nsim_20_20[[comb[m,1]]]$ind_df$phenotype,nsim_20_20[[comb[m,2]]]$ind_df$phenotype))))
-  num_seg_tot<-c(num_seg_tot,sum(c(nsim_20_20[[comb[m,1]]]$pheno_dist$num_seg,nsim_20_20[[comb[m,2]]]$pheno_dist$num_seg)))
-}
-
-gen_redun<-data.frame(genotypic_redund[match(round(med_phen,10),genotypic_redund$phen),])
-row.names(gen_redun)<-1:nrow(comb)
-
-gen_redun$num_seg<-num_seg_tot
-gen_redun$C_score<-C_score_20_20
-
-plot(gen_redun$log10Num,gen_redun$C_score,xlim=c(genotypic_redund$log10Num[genotypic_redund$phen==1],max(gen_redun$log10Num)),xlab=expression(paste("Log"[10], " genotypic redundancy (at median evolved phenotypes)")), ylab="C score",main=paste(nloci," locus case, ",per_g*100,"% of the genome",sep =""))
-abline(v=genotypic_redund$log10Num[genotypic_redund$phen==1],col="blue")
-abline(lm(gen_redun$C_score~gen_redun$log10Num),col="red")
-
-nloci <-50
-per_g<-0.5
-(genotypic_redund <- redundancy(50, alpha))
-
-phen<-genotypic_redund$phen
-
-med_phen<-NULL
-num_seg_tot<-NULL
-for(m in 1:nrow(comb)){
-  med_phen<-c(med_phen,median(abs(c(nsim_50_50[[comb[m,1]]]$ind_df$phenotype,nsim_50_50[[comb[m,2]]]$ind_df$phenotype))))
-  num_seg_tot<-c(num_seg_tot,sum(c(nsim_50_50[[comb[m,1]]]$pheno_dist$num_seg,nsim_50_50[[comb[m,2]]]$pheno_dist$num_seg)))
-}
-
-gen_redun<-data.frame(genotypic_redund[match(round(med_phen,10),genotypic_redund$phen),])
-row.names(gen_redun)<-1:nrow(comb)
-
-gen_redun$num_seg<-num_seg_tot
-gen_redun$C_score<-C_score_50_50
-
-
-plot(gen_redun$log10Num,gen_redun$C_score,xlim=c(genotypic_redund$log10Num[genotypic_redund$phen==1],max(gen_redun$log10Num)),xlab=expression(paste("Log"[10], " genotypic redundancy (at median evolved phenotypes)")), ylab="C score",main=paste(nloci," locus case, ",per_g*100,"% of the genome",sep =""))
-abline(v=genotypic_redund$log10Num[genotypic_redund$phen==1],col="blue")
-abline(lm(gen_redun$C_score~gen_redun$log10Num),col="red")
-
-#########################################################
-#pdf(paste0("Redund_twocases.pdf"), width=8, height= 11)
+pdf(paste0("Redund_twocases.pdf"), width=8, height= 11)
 
 par(mar=c(2,4,2,0.5), oma=c(3,0,2,0), mfcol=c(4,2), cex=1.2)
 
 # Left column, lower migration scenario
 
-plot(n10sim1$pheno_dist$phen, n10sim1$pheno_dist$log10Num, bty="l", type="l", ylim=c(0, max(n50sim1$pheno_dist$log10Num)), las=2, xlim=c(-2.5,2.5), col="magenta",
+plot(nsim50$pheno_dist$phen, nsim50$pheno_dist$log10Num, bty="l", type="l", ylim=c(0, max(nsim50$pheno_dist$log10Num)), las=2, xlim=c(-2.5,2.5), col="blue", lty=2,
      xlab="Phenotype", ylab="Log (# genotypes)", main="A) Genotypic redundancy")
-points(n50sim1$pheno_dist$phen, n50sim1$pheno_dist$log10Num, bty="l", type="l", ylim=c(0, max(n50sim1$pheno_dist$log10Num)), las=2, xlim=c(-2.5,2.5), col="blue", lty=2)
-text(0,6.5,"10 loci", col="magenta")
+points(nsim20$pheno_dist$phen, nsim20$pheno_dist$log10Num, bty="l", type="l", ylim=c(0, max(nsim20$pheno_dist$log10Num)), las=2, xlim=c(-2.5,2.5), col="magenta")
+
+text(0,6.5,"20 loci", col="magenta")
 text(1.75,12.5,"50 loci", col="blue")
 
-plot(n50sim1$pheno_dist$phen, n50sim1$pheno_dist$fitness_p1, bty="l", xlim=c(-2.5,2.5), lty=4,
+plot(nsim50$pheno_dist$phen, nsim50$pheno_dist$fitness_p1, bty="l", xlim=c(-2.5,2.5), lty=4,
      xlab="Phenotype", ylab="Fitness", main="B) Fitness landscape", type="l", las=2)
-points(n50sim1$pheno_dist$phen, n50sim1$pheno_dist$fitness_p2, type="l", lty=3)
+points(nsim50$pheno_dist$phen, nsim50$pheno_dist$fitness_p2, type="l", lty=3)
 text(-1, 0.8, "Patch\n1")
 text(1, 0.8, "Patch\n2")
 
-plot(n10sim1$pheno_dist$phen, n10sim1$pheno_dist$num_phen, bty="l", xlim=c(-2.5,2.5), col="magenta",
+plot(nsim20$pheno_dist$phen, nsim20$pheno_dist$num_phen, bty="l", xlim=c(-2.5,2.5), col="magenta",
      xlab="Phenotype", ylab="Count", main="C) Evolved phenotypes", type="l", las=2)
-points(n50sim1$pheno_dist$phen, n50sim1$pheno_dist$num_phen, bty="l", xlim=c(-2.5,2.5), col="blue", lty=2, type="l", las=2)
-text(0.3,350,"10 loci", col="magenta")
+points(nsim50$pheno_dist$phen, nsim50$pheno_dist$num_phen, bty="l", xlim=c(-2.5,2.5), col="blue", lty=2, type="l", las=2)
+text(1,350,"20 loci", col="magenta")
 text(-1.5,200,"50 loci", col="blue")
 
-# plot(n10sim2$pheno_dist$phen, n10sim2$pheno_dist$num_phen, bty="l", xlim=c(-2.5,2.5), col="magenta",
-#      xlab="Phenotype", ylab="Count", main="C) Evolved phenotypes", type="l", las=2)
-# points(n50sim2$pheno_dist$phen, n50sim2$pheno_dist$num_phen, bty="l", xlim=c(-2.5,2.5), col="blue", lty=2, type="l", las=2)
-# text(0.3,350,"10 loci", col="magenta")
-# text(-1.5,200,"50 loci", col="blue")
-
-plot(n10sim1$pheno_dist$phen, n10sim1$pheno_dist$num_seg, bty="l", xlim=c(-2.5,2.5), ylim=c(0, max(n50sim1$pheno_dist$num_seg)),
+plot(nsim20$pheno_dist$phen, nsim20$pheno_dist$num_seg, bty="l", xlim=c(-2.5,2.5), ylim=c(0, max(nsim50$pheno_dist$num_seg)),
      xlab="Phenotype", ylab="Count", main="D) Segregating redundancy", type="l", las=2, col="magenta")
-points(n50sim1$pheno_dist$phen, n50sim1$pheno_dist$num_seg, bty="l", xlim=c(-2.5,2.5), lty=2, col="blue", type="l", las=2)
-text(-0.1,5,"10 loci", col="magenta")
+points(nsim50$pheno_dist$phen, nsim50$pheno_dist$num_seg, bty="l", xlim=c(-2.5,2.5), lty=2, col="blue", type="l", las=2)
+text(0,5.5,"20 loci", col="magenta")
 text(-1.5,4,"50 loci", col="blue")
-
-# plot(n10sim2$pheno_dist$phen, n10sim2$pheno_dist$num_seg, bty="l", xlim=c(-2.5,2.5), ylim=c(0, max(n50sim2$pheno_dist$num_seg)),
-#      xlab="Phenotype", ylab="Count", main="D) Segregating redundancy", type="l", las=2, col="magenta")
-# points(n50sim2$pheno_dist$phen, n50sim2$pheno_dist$num_seg, bty="l", xlim=c(-2.5,2.5), lty=2, col="blue", type="l", las=2)
-# text(-0.1,5,"10 loci", col="magenta")
-# text(-1.5,4,"50 loci", col="blue")
 
 mtext("Phenotype",side = 1, outer=TRUE, line=1, adj=0.54, cex=2.5)
 mtext("m=0.2",side = 3, outer=TRUE, line=0, adj=0.28, cex=2.5)
@@ -501,31 +411,42 @@ mtext("m=0.5",side = 3, outer=TRUE, line=0, adj=0.84, cex=2.5)
 
 # Right column, lower migration scenario
 
-plot(n10sim_highm$pheno_dist$phen, n10sim_highm$pheno_dist$log10Num, bty="l", type="l", ylim=c(0, max(n50sim_highm$pheno_dist$log10Num)), las=2, xlim=c(-2.5,2.5), col="magenta",
+plot(nsim20Hm$pheno_dist$phen, nsim20Hm$pheno_dist$log10Num, bty="l", type="l", ylim=c(0, max(nsim50Hm$pheno_dist$log10Num)), las=2, xlim=c(-2.5,2.5), col="magenta",
      xlab="Phenotype", ylab="", main="E) Genotypic redundancy")
-points(n50sim_highm$pheno_dist$phen, n50sim_highm$pheno_dist$log10Num, bty="l", type="l", ylim=c(0, max(n50sim_highm$pheno_dist$log10Num)), las=2, xlim=c(-2.5,2.5), col="blue", lty=2, main="E) Genotypic redundancy")
-text(0,6.5,"10 loci", col="magenta")
+points(nsim50Hm$pheno_dist$phen, nsim50Hm$pheno_dist$log10Num, bty="l", type="l", ylim=c(0, max(nsim50Hm$pheno_dist$log10Num)), las=2, xlim=c(-2.5,2.5), col="blue", lty=2, main="E) Genotypic redundancy")
+text(0,6.5,"20 loci", col="magenta")
 text(1.75,12.5,"50 loci", col="blue")
 
-plot(n50sim_highm$pheno_dist$phen, n50sim_highm$pheno_dist$fitness_p1, bty="l", xlim=c(-2.5,2.5), lty=4,
+plot(nsim50Hm$pheno_dist$phen, nsim50Hm$pheno_dist$fitness_p1, bty="l", xlim=c(-2.5,2.5), lty=4,
      xlab="Phenotype", ylab="", main="F) Fitness landscape", type="l", las=2)
-points(n50sim_highm$pheno_dist$phen, n50sim_highm$pheno_dist$fitness_p2, type="l", lty=3)
+points(nsim50Hm$pheno_dist$phen, nsim50Hm$pheno_dist$fitness_p2, type="l", lty=3)
 text(-1, 0.7, "Patch\n1")
 text(1, 0.7, "Patch\n2")
 
-
-plot(n10sim_highm$pheno_dist$phen, n10sim_highm$pheno_dist$num_phen, bty="l", xlim=c(-2.5,2.5), col="magenta",
+plot(nsim20Hm$pheno_dist$phen, nsim20Hm$pheno_dist$num_phen, bty="l", xlim=c(-2.5,2.5), col="magenta",
      xlab="Phenotype", ylab="", main="G) Evolved phenotypes", type="l", las=2)
-points(n50sim_highm$pheno_dist$phen, n50sim_highm$pheno_dist$num_phen, bty="l", xlim=c(-2.5,2.5), col="blue", lty=2, type="l", las=2)
-text(0.6,800,"10 loci", col="magenta")
+points(nsim50Hm$pheno_dist$phen, nsim50Hm$pheno_dist$num_phen, bty="l", xlim=c(-2.5,2.5), col="blue", lty=2, type="l", las=2)
+text(0.6,800,"20 loci", col="magenta")
 text(1.2,400,"50 loci", col="blue")
 
-
-plot(n10sim_highm$pheno_dist$phen, n10sim_highm$pheno_dist$num_seg, bty="l", xlim=c(-2.5,2.5), 
-     #ylim=c(0, max(n50sim_highm$pheno_dist$num_seg)),
+plot(nsim20Hm$pheno_dist$phen, nsim20Hm$pheno_dist$num_seg, bty="l", xlim=c(-2.5,2.5), 
+     #ylim=c(0, max(nsim_50_highm$pheno_dist$num_seg)),
      xlab="Phenotype", ylab="", main="H) Segregating redundancy", type="l", las=2, col="magenta", ylim=c(0,8))
-points(n50sim_highm$pheno_dist$phen, n50sim_highm$pheno_dist$num_seg, bty="l", xlim=c(-2.5,2.5), lty=2, col="blue", type="l", las=2)
-text(0,4,"10 loci", col="magenta")
+points(nsim50Hm$pheno_dist$phen, nsim50Hm$pheno_dist$num_seg, bty="l", xlim=c(-2.5,2.5), lty=2, col="blue", type="l", las=2)
+text(0,6,"20 loci", col="magenta")
 text(1.5,4.5,"50 loci", col="blue")
 
 dev.off()
+
+###########################################################################
+# Visualize relationship of Gen. redundancy to Num. Seg. sites
+###########################################################################
+ggplot(data=gen_redun_final,aes(x=log10Num,y=num_seg))+
+  geom_point(aes(col=Nloci))+
+  xlab(expression(paste("Log"[10], " genotypic redundancy (at median evolved phenotypes)")))+
+  ylab(expression(paste("Number of segregating sites")))+
+  geom_smooth(method='lm',se=F)+
+  labs(color='Percent loci\n affecting trait')+
+  theme_classic()
+
+summary(lm(gen_redun_final$num_seg~gen_redun_final$log10Num))

@@ -350,8 +350,10 @@ plot_grid(leg,lc1_nl, NULL, sc,ncol = 2, nrow = 2,rel_widths = c(1,3,3))
 
 #linear regression stats
 summary(lm(gen_redun_final$C_score~gen_redun_final$log10Num))
-summary(lm(gen_redun_final$C_score~gen_redun_final$num_seg))
+cor(gen_redun_final$C_score, gen_redun_final$log10Num, method = "pearson")
 
+summary(lm(gen_redun_final$C_score~gen_redun_final$num_seg))
+cor(gen_redun_final$C_score, gen_redun_final$num_seg, method = "pearson")
 #############################################################
 # Visualize genotypic redund at optima
 #############################################################
@@ -386,7 +388,7 @@ text(0,6.5,"20 loci", col="magenta")
 text(1.75,12.5,"50 loci", col="blue")
 
 plot(nsim50$pheno_dist$phen, nsim50$pheno_dist$fitness_p1, bty="l", xlim=c(-2.5,2.5), lty=4,
-     xlab="Phenotype", ylab="Fitness", main="B) Fitness landscape", type="l", las=2)
+     xlab="Phenotype", ylab="Individual Fitness", main="B) Fitness landscape", type="l", las=2)
 points(nsim50$pheno_dist$phen, nsim50$pheno_dist$fitness_p2, type="l", lty=3)
 text(-1, 0.8, "Patch\n1")
 text(1, 0.8, "Patch\n2")
@@ -394,18 +396,18 @@ text(1, 0.8, "Patch\n2")
 plot(nsim20$pheno_dist$phen, nsim20$pheno_dist$num_phen, bty="l", xlim=c(-2.5,2.5), col="magenta",
      xlab="Phenotype", ylab="Count", main="C) Evolved phenotypes", type="l", las=2)
 points(nsim50$pheno_dist$phen, nsim50$pheno_dist$num_phen, bty="l", xlim=c(-2.5,2.5), col="blue", lty=2, type="l", las=2)
-text(1,350,"20 loci", col="magenta")
+text(1.5,350,"20 loci", col="magenta")
 text(-1.5,200,"50 loci", col="blue")
 
 plot(nsim20$pheno_dist$phen, nsim20$pheno_dist$num_seg, bty="l", xlim=c(-2.5,2.5), ylim=c(0, max(nsim50$pheno_dist$num_seg)),
      xlab="Phenotype", ylab="Count", main="D) Segregating redundancy", type="l", las=2, col="magenta")
 points(nsim50$pheno_dist$phen, nsim50$pheno_dist$num_seg, bty="l", xlim=c(-2.5,2.5), lty=2, col="blue", type="l", las=2)
-text(0,5.5,"20 loci", col="magenta")
+text(1.5,2,"20 loci", col="magenta")
 text(-1.5,4,"50 loci", col="blue")
 
 mtext("Phenotype",side = 1, outer=TRUE, line=1, adj=0.54, cex=2.5)
-mtext("m=0.2",side = 3, outer=TRUE, line=0, adj=0.28, cex=2.5)
-mtext("m=0.5",side = 3, outer=TRUE, line=0, adj=0.84, cex=2.5)
+mtext("Low migration",side = 3, outer=TRUE, line=0, adj=0.2, cex=2.5)
+mtext("High migration",side = 3, outer=TRUE, line=0, adj=0.95, cex=2.5)
 
 # Right column, lower migration scenario
 
@@ -448,3 +450,4 @@ ggplot(data=gen_redun_final,aes(x=log10Num,y=num_seg))+
   theme_classic()
 
 summary(lm(gen_redun_final$num_seg~gen_redun_final$log10Num))
+cor(gen_redun_final$num_seg, gen_redun_final$log10Num, method = "pearson")

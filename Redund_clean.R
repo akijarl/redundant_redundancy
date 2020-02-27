@@ -315,11 +315,11 @@ gen_redun_final$Nloci<-as.factor(c(rep(paste(per_g[1]*100,"%"),nrow(gen_redun)),
 
 #save a plot of genotypic redundancy vs C score with its own legend
 lc1<-ggplot(data=gen_redun_final,aes(x=log10Num,y=C_score))+
-  geom_point(aes(col=Nloci))+
+  geom_point(aes(col=Nloci,shape=Nloci))+
   xlab(expression(paste("Log"[10], " genotypic redundancy (at median evolved phenotypes)")))+
   ylab(expression(paste("C"[chi^2], " score")))+
   geom_smooth(method='lm',se=F)+
-  labs(color='Percent loci\n affecting trait')+
+  labs(color='Percent loci\n affecting trait',shape='Percent loci\n affecting trait')+
   theme_classic()
 
 #save just the legend from above
@@ -327,23 +327,23 @@ leg<-get_legend(lc1+theme(legend.margin=margin(t=5, r=0, b=0, l=0, unit="cm")))
 
 #save plot of the number of segregating sites vs C score with no legend
 sc<-ggplot(data=gen_redun_final,aes(x=num_seg,y=C_score))+
-  geom_point(aes(col=Nloci))+
+  geom_point(aes(col=Nloci,shape=Nloci))+
   xlab(expression(paste("Number of segregating sites")))+
   ylab(expression(paste("C"[chi^2], " score")))+
   geom_smooth(method='lm',se=F)+
   labs(color='Percent of genome\n under selection')+
   theme_classic()+
-  guides(col=FALSE)
+  guides(col=FALSE, shape=FALSE)
 
 #save a plot of genotypic redundancy vs C score with no legend
 lc1_nl<-ggplot(data=gen_redun_final,aes(x=log10Num,y=C_score))+
-  geom_point(aes(col=Nloci))+
+  geom_point(aes(col=Nloci,shape=Nloci))+
   xlab(expression(paste("Log"[10], " genotypic redundancy (at median evolved phenotypes)")))+
   ylab(expression(paste("C"[chi^2], " score")))+
   geom_smooth(method='lm',se=F)+
   labs(color='Percent loci\n affecting trait')+
   theme_classic()+
-  guides(col=FALSE)
+  guides(col=FALSE,shape=FALSE)
 
 #plot combined figure of genotypic redundancy vs C score and number of segregating sites vs C score with a shared legend
 plot_grid(leg,lc1_nl, NULL, sc,ncol = 2, nrow = 2,rel_widths = c(1,3,3))
@@ -442,11 +442,11 @@ dev.off()
 # Visualize relationship of Gen. redundancy to Num. Seg. sites
 ###########################################################################
 ggplot(data=gen_redun_final,aes(x=log10Num,y=num_seg))+
-  geom_point(aes(col=Nloci))+
+  geom_point(aes(col=Nloci,shape=Nloci))+
   xlab(expression(paste("Log"[10], " genotypic redundancy (at median evolved phenotypes)")))+
   ylab(expression(paste("Number of segregating sites")))+
   geom_smooth(method='lm',se=F)+
-  labs(color='Percent loci\n affecting trait')+
+  labs(color='Percent loci\n affecting trait',shape='Percent loci\n affecting trait')+
   theme_classic()
 
 summary(lm(gen_redun_final$num_seg~gen_redun_final$log10Num))

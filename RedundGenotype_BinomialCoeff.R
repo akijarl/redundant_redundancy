@@ -24,11 +24,13 @@ redundancy.numerical <- function(nloci, alpha) {
 	# could have 1 to 10 mutations evolve
 	# need to loop through all possible mutational states "r" from 1 to 10
 	# each one is a different size matrix
-	# idea: collapse genotype into single character with it's phenotype value
+	# each mutation has a mutational effect size alpha
+	# idea: collapse genotype into single character with its phenotype value
 	
 	genotype <- c()
 	phenotype <- c()
 	
+	#loop through all mutational states to generate genotypes, also list corresponding phenotype values 
 	for (r in 1:nrow(all_loci)){
 	  print(r)
 	  combo.df <- data.frame(combinations(n=length(all_loci$names), r=r, 
@@ -54,7 +56,7 @@ redundancy.numerical <- function(nloci, alpha) {
 	return(final.df)
 }
 
-### Function to calculate Redundancy for `n=10` genotypes - BINOMIAL COEFFICIENT ####
+### Compare to function to calculate Redundancy for `n=10` genotypes - BINOMIAL COEFFICIENT ####
 
 redundancy <- function(nloci, alpha) {
   # assume equal number of + loci and - loci
@@ -64,21 +66,22 @@ redundancy <- function(nloci, alpha) {
 }
 
 
-alpha = 0.2
-n=10
+alpha = 0.2 #mutational effect size
+n=10 #number of loci
 final.df.num <- redundancy.numerical(n, alpha)
+#visualize the number of genotypes possible for each phenotypes from the numerical approach
 hist(final.df.num$phenotype, main = "Numerical number of genotypes for each phenotype", xlab="Phenotype", breaks=seq(-(n/2)*alpha-alpha/2, (n/2)*alpha+alpha/2, by=alpha))
 
 
 final.df.binom <- redundancy(n, alpha)
+#map onto the above visualization the number of genotypes underlying each phenotype calculated by the binomial coefficient approach
 points(final.df.binom$phen, final.df.binom$Num, col="blue")
 
+#repeat visual comparison with more loci and higher mutational effect size
 alpha = 0.3
 n=20
 final.df.num <- redundancy.numerical(n, alpha)
 hist(final.df.num$phenotype, main = "Numerical number of genotypes for each phenotype", xlab="Phenotype", breaks=seq(-(n/2)*alpha-alpha/2, (n/2)*alpha+alpha/2, by=alpha))
-
-
 final.df.binom <- redundancy(n, alpha)
 points(final.df.binom$phen, final.df.binom$Num, col="blue")
 

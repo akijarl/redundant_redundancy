@@ -10,7 +10,9 @@
 ##################################################################################
 packages<-c("gtools","dplyr","ggplot2","cowplot")
 
-if (!(packages %in% installed.packages())){install.packages(packages)}
+for(j in packages){
+  if(!(j %in% installed.packages())){install.packages(j)}
+}
 lapply(packages,require,character.only = TRUE)
 
 # Don't go below 20 loci
